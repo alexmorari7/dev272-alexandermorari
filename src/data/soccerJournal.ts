@@ -1,4 +1,3 @@
-// src/data/soccerJournal.ts
 
 export type JournalItem = {
   id: string;
