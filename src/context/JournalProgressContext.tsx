@@ -1,6 +1,9 @@
+import { journalData, JournalItem } from "@/data/soccerJournal";
 import { createContext, ReactNode, useContext, useMemo, useState } from "react";
 
 type JournalProgressContextValue = {
+  items: JournalItem[];
+  addItem: (item: Omit<JournalItem, "id">) => void;
   completedIds: string[];
   completedCount: number;
   isCompleted: (id: string) => boolean;
@@ -10,10 +13,15 @@ type JournalProgressContextValue = {
 const JournalProgressContext = createContext<JournalProgressContextValue | undefined>(undefined);
 
 export function JournalProgressProvider({ children }: { children: ReactNode }) {
+  const [items, setItems] = useState<JournalItem[]>(journalData);
   const [completedIds, setCompletedIds] = useState<string[]>([]);
 
   const value = useMemo<JournalProgressContextValue>(
     () => ({
+      items,
+      addItem: (item) => {
+        setItems((current) => [{ ...item, id: Date.now().toString() }, ...current]);
+      },
       completedIds,
       completedCount: completedIds.length,
       isCompleted: (id: string) => completedIds.includes(id),
@@ -23,7 +31,7 @@ export function JournalProgressProvider({ children }: { children: ReactNode }) {
         );
       },
     }),
-    [completedIds]
+    [items, completedIds]
   );
 
   return <JournalProgressContext.Provider value={value}>{children}</JournalProgressContext.Provider>;

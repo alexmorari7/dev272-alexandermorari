@@ -1,5 +1,4 @@
 import { useJournalProgress } from "@/context/JournalProgressContext";
-import { journalData } from "@/data/soccerJournal";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -7,8 +6,8 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 export default function JournalDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const item = journalData.find((entry) => entry.id === id);
-  const { isCompleted, toggleCompleted } = useJournalProgress();
+  const { items, isCompleted, toggleCompleted } = useJournalProgress();
+  const item = items.find((entry) => entry.id === id);
 
   const listButton = (
     <Pressable
@@ -39,6 +38,10 @@ export default function JournalDetailScreen() {
       <Stack.Screen options={{ title: item.category }} />
       <Text style={styles.title}>{item.category}</Text>
       <View style={styles.field}>
+        <Text style={styles.label}>Group</Text>
+        <Text style={styles.value}>{item.group}</Text>
+      </View>
+      <View style={styles.field}>
         <Text style={styles.label}>ID</Text>
         <Text style={styles.value}>{item.id}</Text>
       </View>
@@ -49,6 +52,32 @@ export default function JournalDetailScreen() {
       <View style={styles.field}>
         <Text style={styles.label}>Status</Text>
         <Text style={styles.value}>{item.status}</Text>
+      </View>
+      <View style={styles.field}>
+        <Text style={styles.label}>Minutes</Text>
+        <Text style={styles.value}>{item.minutes}</Text>
+      </View>
+      {item.location !== "" && (
+        <View style={styles.field}>
+          <Text style={styles.label}>Location</Text>
+          <Text style={styles.value}>{item.location}</Text>
+        </View>
+      )}
+      <View style={styles.field}>
+        <Text style={styles.label}>Date</Text>
+        <Text style={styles.value}>{item.date}</Text>
+      </View>
+      <View style={styles.field}>
+        <Text style={styles.label}>Importance</Text>
+        <Text style={styles.value}>{item.importance}</Text>
+      </View>
+      <View style={styles.field}>
+        <Text style={styles.label}>Productivity</Text>
+        <Text style={styles.value}>{item.productivity} / 10</Text>
+      </View>
+      <View style={styles.field}>
+        <Text style={styles.label}>Reminder</Text>
+        <Text style={styles.value}>{item.remind ? "On" : "Off"}</Text>
       </View>
       <Pressable
         style={[styles.button, complete && styles.buttonComplete]}

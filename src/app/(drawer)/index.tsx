@@ -1,6 +1,7 @@
 import { useJournalProgress } from "@/context/JournalProgressContext";
-import { JournalItem, journalData } from "@/data/soccerJournal";
-import { Link } from "expo-router";
+import { JournalItem } from "@/data/soccerJournal";
+import { MaterialIcons } from "@expo/vector-icons";
+import { Link, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
@@ -34,20 +35,21 @@ function Row({ item, isCompleted, onToggleCompleted }: RowProps) {
 }
 
 export default function JournalListScreen() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
-  const { completedCount, isCompleted, toggleCompleted } = useJournalProgress();
+  const { items, completedCount, isCompleted, toggleCompleted } = useJournalProgress();
 
   const filteredData = useMemo(() => {
     const lowered = query.trim().toLowerCase();
     if (!lowered) {
-      return journalData;
+      return items;
     }
 
-    return journalData.filter((item) => {
+    return items.filter((item) => {
       const searchableText = `${item.category} ${item.summary} ${item.status}`.toLowerCase();
       return searchableText.includes(lowered);
     });
-  }, [query]);
+  }, [items, query]);
 
   return (
     <View style={styles.screen}>
@@ -63,9 +65,19 @@ export default function JournalListScreen() {
         )}
         ListHeaderComponent={
           <View style={styles.headerContainer}>
-            <Text style={styles.title}>Alexander's Soccer Journal</Text>
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>Alexander's Soccer Journal</Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Add entry"
+                onPress={() => router.push("/add")}
+                style={styles.addButton}
+              >
+                <MaterialIcons name="add" size={28} color="#fff" />
+              </Pressable>
+            </View>
             <Text style={styles.progressText}>
-              Completed entries: {completedCount} / {journalData.length}
+              Completed entries: {completedCount} / {items.length}
             </Text>
             <TextInput
               style={styles.input}
@@ -96,9 +108,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
     gap: 8,
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
   title: {
+    flex: 1,
     fontSize: 28,
     fontWeight: "700",
+  },
+  addButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#2563eb",
   },
   progressText: {
     fontSize: 14,

@@ -5,7 +5,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 export default function DrawerLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <Drawer screenOptions={{ headerShown: false }}>
+      <Drawer screenOptions={{ headerShown: true }}>
         <Drawer.Screen
           name="index"
           options={{

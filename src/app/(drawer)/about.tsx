@@ -1,10 +1,9 @@
 import { useJournalProgress } from "@/context/JournalProgressContext";
-import { journalData } from "@/data/soccerJournal";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function AboutScreen() {
-  const { completedCount } = useJournalProgress();
-  const remaining = journalData.length - completedCount;
+  const { items, completedCount } = useJournalProgress();
+  const remaining = items.length - completedCount;
 
   return (
     <View style={styles.container}>
