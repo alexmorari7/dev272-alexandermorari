@@ -1,8 +1,11 @@
+import { useJournalItems } from "@/api/journalQueries";
 import { useJournalProgress } from "@/context/JournalProgressContext";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function AboutScreen() {
-  const { items, completedCount } = useJournalProgress();
+  const { data: items = [] } = useJournalItems();
+  const { isCompleted } = useJournalProgress();
+  const completedCount = items.filter((item) => isCompleted(item.id)).length;
   const remaining = items.length - completedCount;
 
   return (

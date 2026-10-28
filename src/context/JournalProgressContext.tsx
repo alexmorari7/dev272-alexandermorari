@@ -1,11 +1,10 @@
-import { journalData, JournalItem } from "@/data/soccerJournal";
-import { createContext, ReactNode, useContext, useMemo, useState } from "react";
+import { loadJson, saveJson } from "@/lib/storage";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+
+const STORAGE_KEY = "journal.completedIds";
 
 type JournalProgressContextValue = {
-  items: JournalItem[];
-  addItem: (item: Omit<JournalItem, "id">) => void;
   completedIds: string[];
-  completedCount: number;
   isCompleted: (id: string) => boolean;
   toggleCompleted: (id: string) => void;
 };
@@ -13,25 +12,36 @@ type JournalProgressContextValue = {
 const JournalProgressContext = createContext<JournalProgressContextValue | undefined>(undefined);
 
 export function JournalProgressProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<JournalItem[]>(journalData);
   const [completedIds, setCompletedIds] = useState<string[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    loadJson<string[]>(STORAGE_KEY, []).then((saved) => {
+      setCompletedIds(saved);
+      setHydrated(true);
+    });
+  }, []);
+
+  // Don't save until hydrated, or the empty initial state would overwrite what's stored.
+  useEffect(() => {
+    if (hydrated) {
+      saveJson(STORAGE_KEY, completedIds).catch(console.error);
+    }
+  }, [completedIds, hydrated]);
+
+  const toggleCompleted = useCallback((id: string) => {
+    setCompletedIds((current) =>
+      current.includes(id) ? current.filter((currentId) => currentId !== id) : [...current, id]
+    );
+  }, []);
 
   const value = useMemo<JournalProgressContextValue>(
     () => ({
-      items,
-      addItem: (item) => {
-        setItems((current) => [{ ...item, id: Date.now().toString() }, ...current]);
-      },
       completedIds,
-      completedCount: completedIds.length,
-      isCompleted: (id: string) => completedIds.includes(id),
-      toggleCompleted: (id: string) => {
-        setCompletedIds((current) =>
-          current.includes(id) ? current.filter((currentId) => currentId !== id) : [...current, id]
-        );
-      },
+      isCompleted: (id) => completedIds.includes(id),
+      toggleCompleted,
     }),
-    [items, completedIds]
+    [completedIds, toggleCompleted]
   );
 
   return <JournalProgressContext.Provider value={value}>{children}</JournalProgressContext.Provider>;

@@ -1,9 +1,10 @@
+import { useJournalItems } from "@/api/journalQueries";
 import { useJournalProgress } from "@/context/JournalProgressContext";
-import { JournalItem } from "@/data/soccerJournal";
+import { JournalItem } from "@/types/journal";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 
 type RowProps = {
   item: JournalItem;
@@ -37,7 +38,9 @@ function Row({ item, isCompleted, onToggleCompleted }: RowProps) {
 export default function JournalListScreen() {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const { items, completedCount, isCompleted, toggleCompleted } = useJournalProgress();
+  const { data: items = [], isPending, isError, error, refetch, isRefetching } = useJournalItems();
+  const { isCompleted, toggleCompleted } = useJournalProgress();
+  const completedCount = items.filter((item) => isCompleted(item.id)).length;
 
   const filteredData = useMemo(() => {
     const lowered = query.trim().toLowerCase();
@@ -89,6 +92,25 @@ export default function JournalListScreen() {
             <Text style={styles.resultsText}>Results: {filteredData.length}</Text>
           </View>
         }
+        ListEmptyComponent={
+          isPending ? (
+            <ActivityIndicator style={styles.stateBox} />
+          ) : isError ? (
+            <View style={styles.stateBox}>
+              <Text style={styles.stateText}>Could not load entries: {error.message}</Text>
+              <Pressable accessibilityRole="button" onPress={() => refetch()} style={styles.retryButton}>
+                <Text style={styles.retryText}>Retry</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.stateBox}>
+              <Text style={styles.stateText}>
+                {items.length === 0 ? "No entries yet. Tap + to add one." : "No entries match your search."}
+              </Text>
+            </View>
+          )
+        }
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.listContent}
       />
@@ -97,6 +119,26 @@ export default function JournalListScreen() {
 }
 
 const styles = StyleSheet.create({
+  stateBox: {
+    padding: 24,
+    alignItems: "center",
+    gap: 12,
+  },
+  stateText: {
+    fontSize: 16,
+    color: "#374151",
+    textAlign: "center",
+  },
+  retryButton: {
+    backgroundColor: "#2563eb",
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  retryText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
   screen: {
     flex: 1,
   },
@@ -183,4 +225,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
-

@@ -1,5 +1,5 @@
-import { useJournalProgress } from "@/context/JournalProgressContext";
-import { CATEGORY_GROUPS, GROUP_OPTIONS, IMPORTANCE_OPTIONS, STATUS_OPTIONS } from "@/data/soccerJournal";
+import { useCreateJournalItem } from "@/api/journalQueries";
+import { CATEGORY_GROUPS, GROUP_OPTIONS, IMPORTANCE_OPTIONS, STATUS_OPTIONS } from "@/types/journal";
 import { EntryFormValues, entryValidationSchema, toISODate } from "@/utils/entryValidationSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -7,20 +7,21 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 
 export default function AddEntryScreen() {
   const router = useRouter();
-  const { addItem } = useJournalProgress();
+  const { mutate, isPending } = useCreateJournalItem();
   const [showAndroidPicker, setShowAndroidPicker] = useState(false);
 
   const {
@@ -49,19 +50,24 @@ export default function AddEntryScreen() {
   const selectedGroup = watch("group");
 
   const onSubmit = (values: EntryFormValues) => {
-    addItem({
-      group: values.group,
-      category: values.category,
-      summary: values.summary.trim(),
-      status: values.status,
-      minutes: Number(values.minutes),
-      location: values.location.trim(),
-      importance: values.importance,
-      remind: values.remind,
-      productivity: Number(values.productivity),
-      date: values.date,
-    });
-    router.back();
+    mutate(
+      {
+        group: values.group,
+        category: values.category,
+        summary: values.summary.trim(),
+        status: values.status,
+        minutes: Number(values.minutes),
+        location: values.location.trim(),
+        importance: values.importance,
+        remind: values.remind,
+        productivity: Number(values.productivity),
+        date: values.date,
+      },
+      {
+        onSuccess: () => router.back(),
+        onError: (e) => Alert.alert("Could not save entry", e.message),
+      }
+    );
   };
 
   return (
@@ -331,8 +337,12 @@ export default function AddEntryScreen() {
           )}
         />
 
-        <Pressable style={styles.saveButton} onPress={handleSubmit(onSubmit)}>
-          <Text style={styles.saveText}>Save</Text>
+        <Pressable
+          style={[styles.saveButton, isPending && styles.saveButtonDisabled]}
+          onPress={handleSubmit(onSubmit)}
+          disabled={isPending}
+        >
+          <Text style={styles.saveText}>{isPending ? "Saving..." : "Save"}</Text>
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -366,6 +376,9 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 14, fontWeight: "600", color: "#111827" },
   chipTextSelected: { color: "#fff" },
   switchRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  saveButtonDisabled: {
+    opacity: 0.5,
+  },
   saveButton: {
     marginTop: 8,
     backgroundColor: "#2563eb",

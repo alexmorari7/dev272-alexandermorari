@@ -1,4 +1,4 @@
-import { GROUP_OPTIONS, IMPORTANCE_OPTIONS, STATUS_OPTIONS } from "@/data/soccerJournal";
+import { GROUP_OPTIONS, IMPORTANCE_OPTIONS, STATUS_OPTIONS } from "@/types/journal";
 import { z } from "zod";
 
 export function toISODate(date: Date) {
@@ -7,6 +7,7 @@ export function toISODate(date: Date) {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
+// Form values stay as strings (TextInput gives strings); minutes is converted on submit.
 export const entryValidationSchema = z.object({
   group: z.enum(GROUP_OPTIONS, { message: "Pick a group" }),
   category: z

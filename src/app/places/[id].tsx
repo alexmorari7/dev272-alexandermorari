@@ -1,13 +1,14 @@
+import { useJournalItem } from "@/api/journalQueries";
 import { useJournalProgress } from "@/context/JournalProgressContext";
 import { MaterialIcons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 export default function JournalDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { items, isCompleted, toggleCompleted } = useJournalProgress();
-  const item = items.find((entry) => entry.id === id);
+  const { isCompleted, toggleCompleted } = useJournalProgress();
+  const { data: item, isPending, isError, error, refetch } = useJournalItem(id);
 
   const listButton = (
     <Pressable
@@ -19,6 +20,28 @@ export default function JournalDetailScreen() {
       <MaterialIcons name="format-list-bulleted" size={28} color="#1f2937" />
     </Pressable>
   );
+
+  if (isPending) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  if (isError) {
+    return (
+      <View style={styles.container}>
+        <Stack.Screen options={{ title: "Error" }} />
+        <Text style={styles.title}>Could not load entry</Text>
+        <Text style={styles.value}>{error.message}</Text>
+        <Pressable accessibilityRole="button" style={styles.button} onPress={() => refetch()}>
+          <Text style={styles.buttonText}>Retry</Text>
+        </Pressable>
+        {listButton}
+      </View>
+    );
+  }
 
   if (!item) {
     return (
@@ -34,7 +57,7 @@ export default function JournalDetailScreen() {
   const complete = isCompleted(item.id);
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.container}>
       <Stack.Screen options={{ title: item.category }} />
       <Text style={styles.title}>{item.category}</Text>
       <View style={styles.field}>
@@ -86,13 +109,17 @@ export default function JournalDetailScreen() {
         <Text style={styles.buttonText}>{complete ? "Marked complete" : "Mark as complete"}</Text>
       </Pressable>
       {listButton}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  scroll: {
     flex: 1,
+    backgroundColor: "#fff",
+  },
+  container: {
+    flexGrow: 1,
     padding: 20,
     gap: 12,
     backgroundColor: "#fff",
